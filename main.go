@@ -7,45 +7,28 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 
 	"golang.org/x/net/html"
 )
 
-func fetchURL(url *url.URL) {
-	resp, err := http.Get(url.String())
+func fetchURL(targetURL *url.URL) {
+	resp, err := http.Get(targetURL.String())
 	if err != nil {
 		fmt.Println("Error fetching the URL:", err)
 		return
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			fmt.Println("Error closing response body:", err)
-		}
-	}(resp.Body)
+	defer closeResponseBody(resp.Body)
 
-	// Create a directory to store the file
-	dirName := url.Host + url.Path + ".html"
+	dirName := filepath.Join(targetURL.Host, filepath.FromSlash(targetURL.Path)) + ".html"
 	if err := os.MkdirAll(dirName, 0755); err != nil {
 		fmt.Println("Error creating directory:", err)
 		return
 	}
 
-	filename := path.Join(dirName, "index.html")
-	file, err := os.Create(filename)
-	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			fmt.Println("Error closing file:", err)
-		}
-	}(file)
+	filename := filepath.Join(dirName, "index.html")
+	saveContent(filename, resp.Body)
 }
 
 func saveContent(filename string, content io.Reader) {
