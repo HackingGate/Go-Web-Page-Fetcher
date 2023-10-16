@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fetch/helper"
 	"flag"
 	"fmt"
 	"io"
@@ -11,15 +10,8 @@ import (
 	"path"
 )
 
-func fetchURL(urlString string) {
-	// Parse the URL
-	parsedURL, err := url.Parse(urlString)
-	if err != nil {
-		fmt.Println("Error parsing URL:", err)
-		return
-	}
-
-	resp, err := http.Get(parsedURL.String())
+func fetchURL(url *url.URL) {
+	resp, err := http.Get(url.String())
 	if err != nil {
 		fmt.Println("Error fetching the URL:", err)
 		return
@@ -32,7 +24,7 @@ func fetchURL(urlString string) {
 	}(resp.Body)
 
 	// Create a directory to store the file
-	dirName := parsedURL.Host + parsedURL.Path + ".html"
+	dirName := url.Host + url.Path + ".html"
 	if err := os.MkdirAll(dirName, 0755); err != nil {
 		fmt.Println("Error creating directory:", err)
 		return
@@ -75,17 +67,19 @@ func main() {
 		fmt.Println("Please provide a URL.")
 		return
 	}
-	urls := args
+	urlStrings := args
 
-	for _, url := range urls {
-		if !helper.IsValidURL(url) {
-			fmt.Println("Please provide a valid URL.")
+	parsedURLs := make([]*url.URL, 0, len(urlStrings))
+
+	for _, urlString := range urlStrings {
+		parseURL, err := url.Parse(urlString)
+		if err != nil {
+			fmt.Println("Error parsing URL:", err)
 			return
 		}
-	}
 
-	// Display the provided URL
-	fmt.Println("URLs:", urls)
+		parsedURLs = append(parsedURLs, parseURL)
+	}
 
 	// Check if metadata flag is set
 	if *metadataFlag {
@@ -97,8 +91,7 @@ func main() {
 	}
 
 	// Fetch the URLs
-	for _, urlString := range urls {
-		fmt.Println("Fetching", urlString)
-		fetchURL(urlString)
+	for _, parsedURL := range parsedURLs {
+		fetchURL(parsedURL)
 	}
 }
