@@ -86,6 +86,22 @@ func closeFile(file *os.File) {
 }
 
 func fetchAndExtractMetadata(url *url.URL) {
+	// Assuming the path structure you previously set up:
+	dirName := filepath.Join(url.Host, filepath.FromSlash(url.Path)) + ".html"
+	filename := filepath.Join(dirName, "index.html")
+
+	// Check the modification time of the local file
+	fileInfo, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		fmt.Println("File does not exist:", filename)
+		return
+	} else if err != nil {
+		fmt.Println("Error accessing file info:", err)
+		return
+	}
+
+	lastModified := fileInfo.ModTime()
+
 	resp, err := http.Get(url.String())
 	if err != nil {
 		fmt.Println("Error fetching the URL:", err)
@@ -106,7 +122,7 @@ func fetchAndExtractMetadata(url *url.URL) {
 	fmt.Println("site:", url.String())
 	fmt.Println("num_links:", numLinks)
 	fmt.Println("images:", numImages)
-	fmt.Println("last_fetch:", time.Now().Format(time.RFC3339))
+	fmt.Println("last_fetch:", lastModified.Format(time.RFC3339))
 }
 
 func extractMetadata(n *html.Node) (numLinks int, numImages int) {
