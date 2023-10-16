@@ -13,7 +13,7 @@ Ensure you have Go installed on your machine.
 
 ```bash
 git clone https://github.com/HackingGate/Go-Web-Page-Fetcher.git
-cd fetch
+cd Go-Web-Page-Fetcher
 go build
 ```
 
