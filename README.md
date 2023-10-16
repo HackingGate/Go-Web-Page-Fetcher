@@ -12,7 +12,7 @@ A simple Go tool to download and save the main content of a given webpage as an 
 Ensure you have Go installed on your machine.
 
 ```bash
-git clone https://github.com/HackingGate/fetch.git
+git clone https://github.com/HackingGate/Go-Web-Page-Fetcher.git
 cd fetch
 go build
 ```
