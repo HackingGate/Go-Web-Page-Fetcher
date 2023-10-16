@@ -8,6 +8,10 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
+	"time"
+
+	"golang.org/x/net/html"
 )
 
 func fetchURL(url *url.URL) {
@@ -42,14 +46,84 @@ func fetchURL(url *url.URL) {
 			fmt.Println("Error closing file:", err)
 		}
 	}(file)
+}
 
-	_, err = io.Copy(file, resp.Body)
+func saveContent(filename string, content io.Reader) {
+	dir := filepath.Dir(filename)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		fmt.Println("Error creating directory for asset:", err)
+		return
+	}
+
+	file, err := os.Create(filename)
+	if err != nil {
+		fmt.Println("Error creating file for asset:", err)
+		return
+	}
+	defer closeFile(file)
+
+	_, err = io.Copy(file, content)
 	if err != nil {
 		fmt.Println("Error saving content to file:", err)
 		return
 	}
 
 	fmt.Println("Content saved to:", filename)
+}
+
+func closeResponseBody(body io.ReadCloser) {
+	err := body.Close()
+	if err != nil {
+		fmt.Println("Error closing response body:", err)
+	}
+}
+
+func closeFile(file *os.File) {
+	err := file.Close()
+	if err != nil {
+		fmt.Println("Error closing file:", err)
+	}
+}
+
+func fetchAndExtractMetadata(url *url.URL) {
+	resp, err := http.Get(url.String())
+	if err != nil {
+		fmt.Println("Error fetching the URL:", err)
+		return
+	}
+	defer closeResponseBody(resp.Body)
+
+	doc, err := html.Parse(resp.Body)
+	if err != nil {
+		fmt.Println("Error parsing HTML:", err)
+		return
+	}
+
+	// Extract metadata
+	numLinks, numImages := extractMetadata(doc)
+
+	// Display metadata
+	fmt.Println("site:", url.String())
+	fmt.Println("num_links:", numLinks)
+	fmt.Println("images:", numImages)
+	fmt.Println("last_fetch:", time.Now().Format(time.RFC3339))
+}
+
+func extractMetadata(n *html.Node) (numLinks int, numImages int) {
+	if n.Type == html.ElementNode {
+		switch n.Data {
+		case "a":
+			numLinks++
+		case "img":
+			numImages++
+		}
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		childLinks, childImages := extractMetadata(c)
+		numLinks += childLinks
+		numImages += childImages
+	}
+	return
 }
 
 func main() {
@@ -81,17 +155,14 @@ func main() {
 		parsedURLs = append(parsedURLs, parseURL)
 	}
 
-	// Check if metadata flag is set
-	if *metadataFlag {
-		// Display metadata
-		fmt.Println("site:")
-		fmt.Println("num_links:")
-		fmt.Println("images:")
-		fmt.Println("last_fetch:")
-	}
-
 	// Fetch the URLs
-	for _, parsedURL := range parsedURLs {
-		fetchURL(parsedURL)
+	if *metadataFlag {
+		for _, parsedURL := range parsedURLs {
+			fetchAndExtractMetadata(parsedURL)
+		}
+	} else {
+		for _, parsedURL := range parsedURLs {
+			fetchURL(parsedURL)
+		}
 	}
 }
