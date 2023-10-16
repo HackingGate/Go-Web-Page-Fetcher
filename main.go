@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fetch/helper"
 	"flag"
 	"fmt"
 )
@@ -21,6 +22,13 @@ func main() {
 		return
 	}
 	urls := args
+
+	for _, url := range urls {
+		if !helper.IsValidURL(url) {
+			fmt.Println("Please provide a valid URL.")
+			return
+		}
+	}
 
 	// Display the provided URL
 	fmt.Println("URLs:", urls)
