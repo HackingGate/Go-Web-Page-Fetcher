@@ -21,7 +21,7 @@ func fetchURL(targetURL *url.URL) {
 	}
 	defer closeResponseBody(resp.Body)
 
-	dirName := filepath.Join(targetURL.Host, filepath.FromSlash(targetURL.Path)) + ".html"
+	dirName := filepath.Join(outputDir, targetURL.Host, filepath.FromSlash(targetURL.Path)) + ".html"
 	if err := os.MkdirAll(dirName, 0755); err != nil {
 		fmt.Println("Error creating directory:", err)
 		return
@@ -69,8 +69,7 @@ func closeFile(file *os.File) {
 }
 
 func fetchAndExtractMetadata(url *url.URL) {
-	// Assuming the path structure you previously set up:
-	dirName := filepath.Join(url.Host, filepath.FromSlash(url.Path)) + ".html"
+	dirName := filepath.Join(outputDir, url.Host, filepath.FromSlash(url.Path)) + ".html"
 	filename := filepath.Join(dirName, "index.html")
 
 	// Check the modification time of the local file
@@ -85,14 +84,14 @@ func fetchAndExtractMetadata(url *url.URL) {
 
 	lastModified := fileInfo.ModTime()
 
-	resp, err := http.Get(url.String())
+	file, err := os.Open(filename)
 	if err != nil {
-		fmt.Println("Error fetching the URL:", err)
+		fmt.Println("Error opening the file:", err)
 		return
 	}
-	defer closeResponseBody(resp.Body)
+	defer closeFile(file)
 
-	doc, err := html.Parse(resp.Body)
+	doc, err := html.Parse(file)
 	if err != nil {
 		fmt.Println("Error parsing HTML:", err)
 		return
@@ -125,9 +124,14 @@ func extractMetadata(n *html.Node) (numLinks int, numImages int) {
 	return
 }
 
+var outputDir string
+
 func main() {
 	// Define the metadata flag
 	metadataFlag := flag.Bool("metadata", false, "Display metadata")
+
+	// Define the output directory flag
+	flag.StringVar(&outputDir, "output", ".", "Directory to save fetched web pages")
 
 	// Parse the command line arguments
 	flag.Parse()
