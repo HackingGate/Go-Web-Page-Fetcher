@@ -50,8 +50,6 @@ func saveContent(filename string, content io.Reader) {
 		fmt.Println("Error saving content to file:", err)
 		return
 	}
-
-	fmt.Println("Content saved to:", filename)
 }
 
 func closeResponseBody(body io.ReadCloser) {
