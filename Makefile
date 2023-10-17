@@ -20,6 +20,9 @@ docker-run:
 clean:
 	@echo "Cleaning up..."
 	go clean
+	# Stop and remove all containers associated with the image
+	-docker ps -a -q --filter ancestor=$(DOCKER_IMAGE_NAME) | xargs -r docker rm -f
+	# Remove the image
 	-docker rmi $(DOCKER_IMAGE_NAME)
 
 .PHONY: build docker-build docker-run clean
