@@ -15,7 +15,7 @@ docker-build:
 
 docker-run:
 	@echo "Running fetch tool inside Docker container..."
-	@docker run -v $(OUTPUT_DIR):/output $(DOCKER_IMAGE_NAME) $(ARGS)
+	@docker run -v $(OUTPUT_DIR):/output $(DOCKER_IMAGE_NAME) --output /output $(ARGS)
 
 clean:
 	@echo "Cleaning up..."
