@@ -1,4 +1,5 @@
 DOCKER_IMAGE_NAME := go-web-page-fetcher
+CONTAINER_NAME := go-web-page-fether-container
 OUTPUT_DIR := .
 
 ARGS :=
@@ -15,7 +16,13 @@ docker-build:
 
 docker-run:
 	@echo "Running fetch tool inside Docker container..."
-	@docker run -v $(OUTPUT_DIR):/output $(DOCKER_IMAGE_NAME) --output /output $(ARGS)
+	@CONTAINER_REMOVED=$$(docker rm -f $(CONTAINER_NAME) 2>/dev/null); \
+	if [ -n "$$CONTAINER_REMOVED" ]; then \
+		echo "Removed existing container: $(CONTAINER_NAME), creating new one."; \
+	else \
+		echo "No container named $(CONTAINER_NAME) to remove, creating new one."; \
+	fi
+	@docker run --name $(CONTAINER_NAME) -v $(OUTPUT_DIR):/output $(DOCKER_IMAGE_NAME) --output /output $(ARGS)
 
 clean:
 	@echo "Cleaning up..."
